@@ -1,5 +1,18 @@
+EXTENSION_INFO = """
+Burp extension for cookie manipulation (used for access control tests)
+@author Krzysztof Kotowicz <kkotowicz@securing.pl>
 
+Gives the ability to scan request and responses for cookies and their values. Cookies of a same name
+can be cycled through later on. This makes it easy to e.g. switch JSESSIONID in manual requests in Repeater 
+based on their values from Proxy history.
 
+Interact via context menu:
+ - scan cookies - will extract cookies values from current/selected requests or responses
+                  (use in Proxy|History, Proxy|Intercept / Repeater etc.) and store them in memory
+ - scan cookies in selection - will extract cookies values from currently selected text in editor. Select key=value pair(s)
+ - cycle %cookie% - will replace the current value of a cookie displayed in the editor with the next remembered value.
+ - remove %cookie% from cycler - removes all cookies of a given name from memory
+"""
 
 from burp import IBurpExtender,IHttpListener,IContextMenuFactory
 from java.io import PrintWriter
@@ -92,6 +105,7 @@ class BurpExtender(IBurpExtender,IHttpListener,IContextMenuFactory):
         # obtain our output and error streams
         self.stdout = PrintWriter(callbacks.getStdout(), True)
         self.stderr = PrintWriter(callbacks.getStderr(), True)
+        self.stdout.println(EXTENSION_INFO)
         
         # register ourselves as an HTTP listener
         #callbacks.registerHttpListener(self) # disabled, too much noise
@@ -110,7 +124,6 @@ class BurpExtender(IBurpExtender,IHttpListener,IContextMenuFactory):
 
             for cookie in msg.getCookies():
                 self.add_to_jar(cookie)
-                self._cb.issueAlert("Hey cookie " + cookie.getName() + '=' + cookie.getValue())
         return
 
     def createMenuItems(self,invocation):
